@@ -11,13 +11,40 @@ messages = {
     "help": "Available commands:\n \
     add - add new contact as: add Name [Surname] [+38]0671234567,\n\
     change - change existing contact as: change Name [Surname] [+38]0671234567,\n\
-    phone Name [Surname] - display existing contact as: Name [Surname],\n \
+    phone - display existing contact as:phone Name [Surname],\n \
     show all - display all existing contacts,\n \
     exit, close, good bye - close conversation",
     "default": "Invalid command. Type 'help' for available commands.",
 }
 commands = {}
 contacts = {}
+
+
+# decorator for command parser
+def input_error(func):
+    def inner(string):
+        command_line = func(string)
+        print_msg = ""
+        if command_line[0]:
+            if command_line[0] == "add":
+                if not (command_line[1] and command_line[2]):
+                    print(messages["add"])
+                    command_line[0] = ""
+                elif command_line[1] in contacts.keys():
+                    print_msg = f"{command_line[1]} is already in contact list with phone {contacts[command_line[1]]}"
+                    command_line[0] = ""
+            elif command_line[0] == "change":
+                if not (command_line[1] and command_line[2]):
+                    print_msg = messages["change"]
+                    command_line[0] = ""
+                elif not (command_line[1] in contacts.keys()):
+                    print_msg = f"There is no {command_line[1]} in your contacts"
+                    command_line[0] = ""
+        else:
+            print_msg = messages["default"]
+        return command_line, print_msg
+
+    return inner
 
 
 # Greeting user
@@ -67,35 +94,7 @@ def help(command_line):
     return True
 
 
-# decorator for command parser
-def input_error(func):
-    def inner(string):
-        command_line = func(string)
-        if command_line[0]:
-            if command_line[0] == "add":
-                if not (command_line[1] and command_line[2]):
-                    print(messages["add"])
-                    command_line[0] = ""
-                elif command_line[1] in contacts.keys():
-                    print(
-                        f"{command_line[1]} is already in contacts with phone {contacts[command_line[1]]}"
-                    )
-                    command_line[0] = ""
-            elif command_line[0] == "change":
-                if not (command_line[1] and command_line[2]):
-                    print(messages["change"])
-                    command_line[0] = ""
-                elif not (command_line[1] in contacts.keys()):
-                    print(f"There is no {command_line[1]} in your contacts")
-                    command_line[0] = ""
-        else:
-            print(messages["default"])
-        return command_line
-
-    return inner
-
-
-# command_parser decorated for input errors 
+# command_parser decorated for input errors
 @input_error
 def command_parser(user_input):
     pattern = r"\+?\d+"
@@ -147,8 +146,9 @@ def main():
     print("Welcome to contacts assistant, enter your command")
     while True:
         user_input = input(">")
-        command_line = command_parser(user_input)
+        command_line, print_msg = command_parser(user_input)
         if not command_line[0]:
+            print(print_msg)
             continue
         if commands[command_line[0]]:
             command = commands[command_line[0]]

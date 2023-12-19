@@ -16,8 +16,8 @@ messages = {
     exit, close, good bye - close conversation",
     "default": "Invalid command. Type 'help' for available commands.",
 }
-commands = {}
-contacts = {}
+commands = {}  # disctionary of command objects
+contacts = {}  # disctionary of contacts "Name": "phone number"
 
 
 # decorator for command parser
@@ -26,164 +26,150 @@ def input_error(func):
         print_msg = ""
 
         try:
-            command_line = func(string)
-        except:
-            print_msg = messages["default"]
-            command_line = ["", "", ""]
-            return command_line, print_msg
+            command_list = func(string)
+        except KeyError:
+            return ["", "", ""], messages["default"]
+        except ValueError:
+            return ["", "", ""], "Invalid value. Try again."
+        except IndexError:
+            return ["", "", ""], "Invalid index. Try again."
 
-        if command_line[0]:
-            if command_line[0] == "add":
-                if not (command_line[1] and command_line[2]):
+        if command_list[0]:
+            if command_list[0] == "add":
+                if not (command_list[1] and command_list[2]):
                     print_msg = messages["add"]
-                    command_line[0] = ""
-                elif command_line[1] in contacts.keys():
-                    print_msg = f"{command_line[1]} is already in contact list with phone {contacts[command_line[1]]}"
-                    command_line[0] = ""
-            elif command_line[0] == "change":
-                if not (command_line[1] and command_line[2]):
+                    command_list[0] = ""
+                elif command_list[1] in contacts.keys():
+                    print_msg = f"{command_list[1]} is already in contact list with phone {contacts[command_list[1]]}"
+                    command_list[0] = ""
+            elif command_list[0] == "change":
+                if not (command_list[1] and command_list[2]):
                     print_msg = messages["change"]
-                    command_line[0] = ""
-                elif not (command_line[1] in contacts.keys()):
-                    print_msg = f"There is no {command_line[1]} in your contacts"
-                    command_line[0] = ""
+                    command_list[0] = ""
+                elif not (command_list[1] in contacts.keys()):
+                    print_msg = f"There is no {command_list[1]} in your contacts"
+                    command_list[0] = ""
+            elif command_list[0] == "phone":
+                if command_list[1] not in contacts.keys():
+                    print_msg = f"There is no {command_list[1]} in your contacts"
+                    command_list[0] = ""
         else:
             print_msg = messages["default"]
-        return command_line, print_msg
+        return command_list, print_msg
 
     return inner
 
 
 # Greeting user
-# def hello(command_line):
-#     print(messages["hello"])
-#     return True
+def hello(command_list):
+    return True, messages["hello"]
 
 
 # add new contact
-def add(command_line):
-    contacts[command_line[1]] = command_line[2]
-    return True
+def add(command_list):
+    contacts[command_list[1]] = command_list[2]
+    return True, f"{command_list[1]} added with {command_list[2]}"
 
 
 # change existing contact
-def change(command_line):
-    contacts[command_line[1]] = command_line[2]
-    return True
+def change(command_list):
+    contacts[command_list[1]] = command_list[2]
+    return True, f"{command_list[1]} updated with {command_list[2]}"
 
 
 # display existing contact
-# def phone(command_line):
-#     if contacts and command_line[1]:
-#         print(f"{contacts[command_line[1]]}")
-#     else:
-#         print(messages["phone"])
-#     return True
+def phone(command_list):
+    return True, f"{contacts[command_list[1]]}"
 
 
 # display all existing contacts
-# def show_all(command_line):
-#     print(messages["show_all"])
-#     for name, phone in contacts.items():
-#         print(f"{name} {phone}")
-#     return True
+def show_all(command_list):
+    print_msg = messages["show_all"]
+    if contacts:
+        for name, phone in contacts.items():
+            print_msg += f"\n{name} {phone}"
+    else:
+        print_msg += "...empty"
+    return True, print_msg
 
 
 # exit CLI
-# def exit(command_line):
-#     print(messages["exit"])
-#     return False
+def exit(command_list):
+    print_msg = messages["exit"]
+    return (False, print_msg)
 
 
 # display commands list
-# def help(command_line):
-#     print(messages["help"])
-#     return True
+def help(command_list):
+    print_msg = messages["help"]
+    return True, print_msg
 
 
 # command_parser decorated for input errors
 @input_error
 def command_parser(user_input):
-    pattern = r"\+?\d+"
-    command_line = ["", "", ""]
+    pattern = r"\+?\d+"  # pattern for phone number selection
+    command_list = ["", "", ""]  # list: command, cintact, phone number
 
     command = user_input.strip().casefold()
-
+    # commands without parameters
     if command == "exit":
-        command_line[0] = "exit"
-        return command_line
+        command_list[0] = "exit"
+        return command_list
 
     if command == "good bye":
-        command_line[0] = "exit"
-        return command_line
+        command_list[0] = "exit"
+        return command_list
 
     if command == "close":
-        command_line[0] = "exit"
-        return command_line
+        command_list[0] = "exit"
+        return command_list
 
     if command == "show all":
-        command_line[0] = "show_all"
-        return command_line
-
+        command_list[0] = "show_all"
+        return command_list
+    # commands with parameters
     try:
-        str = re.search(pattern, user_input)
-        command_line[2] = str.group()
+        str = re.search(pattern, user_input)  # search phone number
+        command_list[2] = str.group()
         user_input = user_input[: str.span()[0]]
     except:
-        command_line[2] = ""
+        command_list[2] = ""
 
+    # search contact name
     fields = user_input.split()
     if fields[0].strip().casefold() in messages.keys():
-        command_line[0] = fields[0].strip().casefold()
+        command_list[0] = fields[0].strip().casefold()
         user_input = user_input.replace(fields[0], "")
 
-    command_line[1] = user_input.strip()
+    command_list[1] = user_input.strip()
 
-    return command_line
+    return command_list
 
 
 def main():
-    # commands["hello"] = hello
+    commands["hello"] = hello
     commands["add"] = add
     commands["change"] = change
-    # commands["phone"] = phone
-    # commands["show_all"] = show_all
-    # commands["exit"] = exit
-    # commands["help"] = help
+    commands["phone"] = phone
+    commands["show_all"] = show_all
+    commands["exit"] = exit
+    commands["help"] = help
 
     print("Welcome to contacts assistant, enter your command")
     while True:
         user_input = input(">")
-        command_line, print_msg = command_parser(user_input)
+        command_list, print_msg = command_parser(user_input)
 
-        if not command_line[0]:
+        if not command_list[0]:
             print(print_msg)
             continue
 
-        if command_line[0] == "hello":
-            print(messages["hello"])
-
-        elif command_line[0] == "phone":
-            if contacts and command_line[1]:
-                print(f"{contacts[command_line[1]]}")
-            else:
-                print(messages["phone"])
-
-        elif command_line[0] == "show_all":
-            print(messages["show_all"])
-            for name, phone in contacts.items():
-                print(f"{name} {phone}")
-
-        elif command_line[0] == "help":
-            print(messages["help"])
-
-        elif command_line[0] == "exit":
-            print(messages["exit"])
-            break
-
-        elif commands[command_line[0]]:
-            command = commands[command_line[0]]
-            if not command(command_line):
+        if commands[command_list[0]]:
+            command = commands[command_list[0]]
+            status, print_msg = command(command_list)
+            print(print_msg)
+            if not status:
                 break
         else:
             print(messages["default"])

@@ -34,28 +34,25 @@ def input_error(func):
         except IndexError:
             return ["", "", ""], "Invalid index. Try again."
 
-        if command_list[0]:
-            if command_list[0] == "add":
-                if not (command_list[1] and command_list[2]):
-                    print_msg = messages["add"]
-                    command_list[0] = ""
-                elif command_list[1] in contacts.keys():
-                    print_msg = f"{command_list[1]} is already in contact list with phone {contacts[command_list[1]]}"
-                    command_list[0] = ""
-            elif command_list[0] == "change":
-                if not (command_list[1] and command_list[2]):
-                    print_msg = messages["change"]
-                    command_list[0] = ""
-                elif not (command_list[1] in contacts.keys()):
-                    print_msg = f"There is no {command_list[1]} in your contacts"
-                    command_list[0] = ""
-            elif command_list[0] == "phone":
-                if command_list[1] not in contacts.keys():
-                    print_msg = f"There is no {command_list[1]} in your contacts"
-                    command_list[0] = ""
-        else:
+        if not command_list[0]:
             print_msg = messages["default"]
         return command_list, print_msg
+
+    return inner
+
+
+# decorator for command handler
+def handler_error(func):
+    def inner(command_list):
+        try:
+            status, print_msg = func(command_list)
+        except KeyError:
+            return True, messages["default"]
+        except ValueError:
+            return True, "Invalid value. Try again."
+        except IndexError:
+            return True, "Invalid index. Try again."
+        return True, print_msg
 
     return inner
 
@@ -66,23 +63,48 @@ def hello(command_list):
 
 
 # add new contact
+@handler_error
 def add(command_list):
-    contacts[command_list[1]] = command_list[2]
-    return True, f"{command_list[1]} added with {command_list[2]}"
+    if not (command_list[1] and command_list[2]):
+        print_msg = messages["add"]
+
+    elif command_list[1] in contacts.keys():
+        print_msg = f"{command_list[1]} is already in contact list with phone {contacts[command_list[1]]}"
+
+    else:
+        contacts[command_list[1]] = command_list[2]
+        print_msg = f"{command_list[1]} added with {command_list[2]}"
+    return True, print_msg
 
 
 # change existing contact
+@handler_error
 def change(command_list):
-    contacts[command_list[1]] = command_list[2]
-    return True, f"{command_list[1]} updated with {command_list[2]}"
+    if not (command_list[1] and command_list[2]):
+        print_msg = messages["change"]
+
+    elif not (command_list[1] in contacts.keys()):
+        print_msg = f"There is no {command_list[1]} in your contacts"
+
+    else:
+        contacts[command_list[1]] = command_list[2]
+        print_msg = f"{command_list[1]} updated with {command_list[2]}"
+    return True, print_msg
 
 
 # display existing contact
+@handler_error
 def phone(command_list):
-    return True, f"{contacts[command_list[1]]}"
+    if command_list[1] not in contacts.keys():
+        print_msg = f"There is no {command_list[1]} in your contacts"
+
+    else:
+        print_msg = f"{contacts[command_list[1]]}"
+    return (True, print_msg)
 
 
 # display all existing contacts
+@handler_error
 def show_all(command_list):
     print_msg = messages["show_all"]
     if contacts:
@@ -109,7 +131,7 @@ def help(command_list):
 @input_error
 def command_parser(user_input):
     pattern = r"\+?\d+"  # pattern for phone number selection
-    command_list = ["", "", ""]  # list: command, cintact, phone number
+    command_list = ["", "", ""]  # list: command, contact, phone number
 
     command = user_input.strip().casefold()
     # commands without parameters

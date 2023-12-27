@@ -134,30 +134,29 @@ def command_parser(user_input):
     command_list = ["", "", ""]  # list: command, contact, phone number
 
     command = user_input.strip().casefold()
-    # if commands without parameters
+    # if command is without parameters
     if command in ["exit", "good bye", "close"]:
         command_list[0] = "exit"
-        return command_list
     
-    if command == "show all":
+    elif command == "show all":
         command_list[0] = "show_all"
-        return command_list
-    
+        
     # otherwise commands with parameters
-    try:
-        str = re.search(pattern, user_input)  # search phone number
-        command_list[2] = str.group()
-        user_input = user_input[: str.span()[0]]
-    except:
-        command_list[2] = ""
+    else:
+        try:
+            str = re.search(pattern, user_input)  # search phone number
+            command_list[2] = str.group()
+            user_input = user_input[: str.span()[0]]
+        except:
+            command_list[2] = ""
 
     # search contact name
-    fields = user_input.split()
-    if fields[0].strip().casefold() in messages.keys():
-        command_list[0] = fields[0].strip().casefold()
-        user_input = user_input.replace(fields[0], "")
+        fields = user_input.split()
+        if fields[0].strip().casefold() in messages.keys():
+            command_list[0] = fields[0].strip().casefold()
+            user_input = user_input.replace(fields[0], "")
 
-    command_list[1] = user_input.strip()
+        command_list[1] = user_input.strip()
 
     return command_list
 

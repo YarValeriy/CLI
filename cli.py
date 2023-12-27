@@ -134,23 +134,16 @@ def command_parser(user_input):
     command_list = ["", "", ""]  # list: command, contact, phone number
 
     command = user_input.strip().casefold()
-    # commands without parameters
-    if command == "exit":
+    # if commands without parameters
+    if command in ["exit", "good bye", "close"]:
         command_list[0] = "exit"
         return command_list
-
-    if command == "good bye":
-        command_list[0] = "exit"
-        return command_list
-
-    if command == "close":
-        command_list[0] = "exit"
-        return command_list
-
+    
     if command == "show all":
         command_list[0] = "show_all"
         return command_list
-    # commands with parameters
+    
+    # otherwise commands with parameters
     try:
         str = re.search(pattern, user_input)  # search phone number
         command_list[2] = str.group()

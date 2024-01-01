@@ -21,6 +21,7 @@ class Phone(Field):
         super().__init__(value)
 
 
+
 class Record:
     def __init__(self, name):
         self.name = Name(name)
@@ -32,21 +33,22 @@ class Record:
     def remove_phone(self, phone):
         self.phones = [p for p in self.phones if p.value != phone]
 
-    def edit_phone(self, old_phone, new_phone):
-        if old_phone not in self.phones:
-            raise ValueError(f"There is no phone number {old_phone}")
-        else:
-            self.remove_phone(old_phone)
-            self.add_phone(new_phone)
-
     def find_phone(self, phone):
         for p in self.phones:
             if p.value == phone:
                 return p
         return None
 
+    def edit_phone(self, old_phone, new_phone):
+        if not self.find_phone(old_phone):
+            raise ValueError(f"There is no phone number {old_phone} for {self.name}")
+        else:
+            self.remove_phone(old_phone)
+            self.add_phone(new_phone)
+
     def __str__(self):
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
+
 
 class AddressBook(UserDict):
     def add_record(self, record):

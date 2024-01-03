@@ -4,6 +4,8 @@ from datetime import timedelta, date, datetime
 
 class Field:
     def __init__(self, value):
+        if not self.is_valid(value):
+            raise ValueError("Invalid value")
         self.__value = value
 
     @property
@@ -11,53 +13,75 @@ class Field:
         return self.__value
 
     @value.setter
-    def value(self, new_value):
-        self.__value = new_value
+    def value(self, value):
+        if not self.is_valid(value):
+            raise ValueError("Invalid value")
+        self.__value = value
 
     def __str__(self):
-        return str(self.value)
+        #     return str(self.value)
+        return str(self.__value)
+
+    def is_valid(self, value):  # new
+        return True  # new
 
 
 class Name(Field):
     def __init__(self, value):
         super().__init__(value)
 
+    @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, new_value):
+        if not isinstance(new_value, Name):
+            raise ValueError("Invalid name format")
+        self.__name = new_value
+
 
 class Birthday(Field):
     def __init__(self, value):
         super().__init__(value)
+        
+    def is_valid(self, value):
         try:
             datetime.strptime(value, "%d-%b")  # Expected DD-Mon format
+            return True
         except ValueError:
             raise ValueError(f"Invalid birthday format {value}, enter DD-Mon")
 
-    @Field.value.setter
-    def value(self, new_value):
-        try:
-            datetime.strptime(new_value, "%d-%b")  # Expected DD-Mon format
-        except ValueError:
-            raise ValueError("Invalid birthday format {new_value}, enter DD-Mon")
-        self.__value = new_value
+    @property
+    def birthday(self):
+        return self.__birthday
+
+    @birthday.setter
+    def birthday(self, new_value):
+        if new_value and not isinstance(new_value, Birthday):
+            raise ValueError(f"Invalid birthday format {new_value}, enter DD-Mon")
+        self.__birthday = new_value
 
 
 class Phone(Field):
     def __init__(self, value):
         super().__init__(value)
+
+    def is_valid(self, value):
         if not value.isdigit() or len(value) != 10:
             raise ValueError(f"Invalid phone format {value}")
-
-    @Field.value.setter
-    def value(self, new_value):
-        if not new_value.isdigit() or len(new_value) != 10:
-            raise ValueError(f"Invalid phone format {new_value}")
-        self.__value = new_value
+        return True
 
 
 class Record:
     def __init__(self, name, birthday=None):
         self.name = Name(name)
         self.phones = []
-        self.birthday = Birthday(birthday) if birthday else None
+        try:
+            self.birthday = Birthday(birthday) if birthday else None
+        except ValueError:
+            self.birthday = None
+            print(f"Invalid birthday format {birthday} for {name}, enter DD-Mon")
 
     def add_phone(self, phone):
         phone_add = Phone(phone)
@@ -92,37 +116,7 @@ class Record:
         return None
 
     def __str__(self):
-        return f"Contact name: {self.name.value}, {self.birthday.value}, phones: {'; '.join(p.value for p in self.phones)}"
-
-    @property
-    def birthday(self):
-        return self.__birthday
-
-    @birthday.setter
-    def birthday(self, new_value):
-        if new_value and not isinstance(new_value, Birthday):
-            raise ValueError(f"Invalid birthday format {new_value}, enter DD-Mon")
-        self.__birthday = new_value
-
-    @property
-    def name(self):
-        return self.__name
-
-    @name.setter
-    def name(self, new_value):
-        if not isinstance(new_value, Name):
-            raise ValueError("Invalid name format")
-        self.__name = new_value
-
-    @property
-    def phones(self):
-        return self.__phones
-
-    @phones.setter
-    def phones(self, new_value):
-        if not all(isinstance(phone, Phone) for phone in new_value):
-            raise ValueError("Invalid phone format {new_value}")
-        self.__phones = new_value
+        return f"Contact name: {self.name.value}, {self.birthday}, phones: {'; '.join(p.value for p in self.phones)}"
 
 
 class AddressBook(UserDict):
@@ -146,7 +140,6 @@ class AddressBook(UserDict):
 
     def iterate_N_lines(self, N):
         records = list(self.data.values())
-        print(records)
         for i in range(0, len(records), N):
             yield records[i : i + N]
 
@@ -168,16 +161,22 @@ book.add_record(john_record)
 jane_record = Record("Jane", "30-Dec")
 jane_record.add_phone("9876543210")
 book.add_record(jane_record)
+tom_record = Record("Tom")
+tom_record.add_phone("1223344556")
+book.add_record(tom_record)
+
+bill_record = Record("Bill", "30/09/1990")
 try:
-    bill_record = Record("Bill", "30/09/1990")
     bill_record.add_phone("567576576")
-    book.add_record(bill_record)
 except ValueError as err:
     print(err.args[0])
+book.add_record(bill_record)
 # Виведення всіх записів у книзі
 for name, record in book.data.items():
     print(record)
-    print(f"{record.days_to_birthday()} days to birthday")
+    n = record.days_to_birthday()
+    if n:
+        print(f"{record.days_to_birthday()} days to birthday")
 
 # Знаходження та редагування телефону для John
 try:

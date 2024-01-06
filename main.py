@@ -19,7 +19,6 @@ class Field:
         self.__value = value
 
     def __str__(self):
-        #     return str(self.value)
         return str(self.__value)
 
     def is_valid(self, value):  # new
@@ -27,23 +26,10 @@ class Field:
 
 
 class Name(Field):
-    def __init__(self, value):
-        super().__init__(value)
-
-    @property
-    def name(self):
-        return self.__name
-
-    @name.setter
-    def name(self, new_value):
-        if not isinstance(new_value, Name):
-            raise ValueError("Invalid name format")
-        self.__name = new_value
+    pass
 
 
 class Birthday(Field):
-    def __init__(self, value):
-        super().__init__(value)
         
     def is_valid(self, value):
         try:
@@ -52,21 +38,9 @@ class Birthday(Field):
         except ValueError:
             raise ValueError(f"Invalid birthday format {value}, enter DD-Mon")
 
-    @property
-    def birthday(self):
-        return self.__birthday
-
-    @birthday.setter
-    def birthday(self, new_value):
-        if new_value and not isinstance(new_value, Birthday):
-            raise ValueError(f"Invalid birthday format {new_value}, enter DD-Mon")
-        self.__birthday = new_value
-
 
 class Phone(Field):
-    def __init__(self, value):
-        super().__init__(value)
-
+  
     def is_valid(self, value):
         if not value.isdigit() or len(value) != 10:
             raise ValueError(f"Invalid phone format {value}")

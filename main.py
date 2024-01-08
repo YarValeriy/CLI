@@ -1,5 +1,7 @@
 from collections import UserDict
 from datetime import timedelta, date, datetime
+from pickle import dump, load
+import os.path
 
 
 class Field:
@@ -30,7 +32,6 @@ class Name(Field):
 
 
 class Birthday(Field):
-        
     def is_valid(self, value):
         try:
             datetime.strptime(value, "%d-%b")  # Expected DD-Mon format
@@ -40,7 +41,6 @@ class Birthday(Field):
 
 
 class Phone(Field):
-  
     def is_valid(self, value):
         if not value.isdigit() or len(value) != 10:
             raise ValueError(f"Invalid phone format {value}")
@@ -95,16 +95,35 @@ class Record:
 
 class AddressBook(UserDict):
     def add_record(self, record):
-        self.data[record.name.value] = record
-        print(f"Record added for {record.name.value}")
+        if record.name.value in self.data.keys():
+            self.data[record.name.value] = record
+            print(f"Record for {record.name.value} is overwritten with new data")
+        else:
+            self.data[record.name.value] = record
+            print(f"Record added for {record.name.value}")
 
     def find(self, name):
         return self.data.get(name)
 
+    def find_substr(self, sub_str):
+        search_list = {}
+        for name, record in book.data.items():
+            if name.find(sub_str) != -1:
+                search_list[record.name.value] = record
+        return search_list
+
+    def find_subnum(self, sub_num):
+        search_list = {}
+        for name, record in book.data.items():
+            for phone in record.phones:
+                if phone.value.find(sub_num):
+                    search_list[record.name.value] = record
+        return search_list
+
     def delete(self, name):
         if name in self.data:
             del self.data[name]
-            print(f"Record deleted with {name}")
+            print(f"Record for {name} deleted")
         else:
             print(f"There is no record for {name}")
 
@@ -117,24 +136,62 @@ class AddressBook(UserDict):
         for i in range(0, len(records), N):
             yield records[i : i + N]
 
+    def write_book_to_file(self, filename):
+        with open(filename, "wb") as fh:
+            dump(self.data, fh)
+            print(f"AddressBook saved to file {filename}")
+
+    def read_book_from_file(self, filename):
+        with open(filename, "rb") as fh:
+            self.data = load(fh)
+            return book
+
 
 # Створення нової адресної книги
 book = AddressBook()
-# Створення запису для John
+book_file = "my_addressbook.bin"
+if os.path.isfile(f"./{book_file}"):
+    book.read_book_from_file("my_addressbook.bin")
+    print(f"Address book loaded from {book_file}")
+else:
+    print(f"{book_file} is not found")
+
+# Виведення всіх записів у книзі
+print(f"Contacts from {book_file}:")
+for name, record in book.data.items():
+    print(record)
+    n = record.days_to_birthday()
+    if n:
+        print(f"{record.days_to_birthday()} days to birthday")
+
+search_list = book.find_substr("Jo")
+if search_list:
+    print('Contacts found with "Jo" in name:')
+    for name, record in search_list.items():
+        print(record)
+
+search_list = book.find_subnum("22")
+if search_list:
+    print('Contacts found with "22" in phone number')
+    for name, record in search_list.items():
+        print(record)
+
+# Створення запису для Jonathan
 try:
-    john_record = Record("John", "10-Jan")
-    john_record.add_phone("1234567890")
-    john_record.add_phone("5555555555")
-    john_record.add_phone("12345abcde")
+    jonathan_record = Record("Jonathan", "20-Mar")
+    jonathan_record.add_phone("2244335566")
+    jonathan_record.add_phone("9988776655")
+    jonathan_record.add_phone("12345abcde")
 except ValueError as err:
     print(err.args[0])
 
-# Додавання запису John до адресної книги
-book.add_record(john_record)
+# Додавання запису Jonathan до адресної книги
+book.add_record(jonathan_record)
 # Створення та додавання нового запису для Jane
 jane_record = Record("Jane", "30-Dec")
 jane_record.add_phone("9876543210")
 book.add_record(jane_record)
+
 tom_record = Record("Tom")
 tom_record.add_phone("1223344556")
 book.add_record(tom_record)
@@ -145,12 +202,6 @@ try:
 except ValueError as err:
     print(err.args[0])
 book.add_record(bill_record)
-# Виведення всіх записів у книзі
-for name, record in book.data.items():
-    print(record)
-    n = record.days_to_birthday()
-    if n:
-        print(f"{record.days_to_birthday()} days to birthday")
 
 # Знаходження та редагування телефону для John
 try:
@@ -181,3 +232,5 @@ for n_records in book.iterate_N_lines(n):
 
 # Видалення запису Jane
 book.delete("Jane")
+
+book.write_book_to_file("my_addressbook.bin")

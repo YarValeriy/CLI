@@ -153,28 +153,14 @@ book_file = "my_addressbook.bin"
 if os.path.isfile(f"./{book_file}"):
     book.read_book_from_file("my_addressbook.bin")
     print(f"Address book loaded from {book_file}")
+    print(f"Contacts from {book_file}:")
+    for name, record in book.data.items():
+        print(record)
+        n = record.days_to_birthday()
+        if n:
+            print(f"{record.days_to_birthday()} days to birthday")
 else:
-    print(f"{book_file} is not found")
-
-# Виведення всіх записів у книзі
-print(f"Contacts from {book_file}:")
-for name, record in book.data.items():
-    print(record)
-    n = record.days_to_birthday()
-    if n:
-        print(f"{record.days_to_birthday()} days to birthday")
-
-search_list = book.find_substr("Jo")
-if search_list:
-    print('Contacts found with "Jo" in name:')
-    for name, record in search_list.items():
-        print(record)
-
-search_list = book.find_subnum("22")
-if search_list:
-    print('Contacts found with "22" in phone number')
-    for name, record in search_list.items():
-        print(record)
+    print(f"AddressBook {book_file} is not found")
 
 # Створення запису для Jonathan
 try:
@@ -187,10 +173,17 @@ except ValueError as err:
 
 # Додавання запису Jonathan до адресної книги
 book.add_record(jonathan_record)
-# Створення та додавання нового запису для Jane
+
+# Створення та додавання новb[] записsd
 jane_record = Record("Jane", "30-Dec")
 jane_record.add_phone("9876543210")
 book.add_record(jane_record)
+
+# Створення та додавання нових записів
+john_record = Record("John", "10-Jan")
+john_record.add_phone("5555555555")
+john_record.add_phone("1112223333")
+book.add_record(john_record)
 
 tom_record = Record("Tom")
 tom_record.add_phone("1223344556")
@@ -203,10 +196,14 @@ except ValueError as err:
     print(err.args[0])
 book.add_record(bill_record)
 
-# Знаходження та редагування телефону для John
+# Знаходження та редагування телефону
 try:
     john = book.find("John")
-    john.edit_phone("1234567890", "1112223333")
+    if john:
+        john.edit_phone("1234567890", "1112223333")
+    else:
+        print(f'There is no record for "John"')
+
     bill = book.find("Bill")
     if bill:
         bill.edit_phone("567576576", 1234567890)
@@ -220,10 +217,21 @@ print(john)  # Виведення: Contact name: John, phones: 1112223333; 55555
 # Пошук конкретного телефону у записі John
 found_phone = john.find_phone("5555555555")
 print(f"{john.name}: {found_phone}")  # Виведення: 5555555555
+# Пошук за літерами імені
+search_list = book.find_substr("Jo")
+if search_list:
+    print('Contacts found with "Jo" in name:')
+    for name, record in search_list.items():
+        print(record)
+# Пошук за цифрами в номері телефону
+search_list = book.find_subnum("22")
+if search_list:
+    print('Contacts found with "22" in phone number')
+    for name, record in search_list.items():
+        print(record)
 
 # Ітерація по n записів
 print("Iteration check")
-
 n = 2
 for n_records in book.iterate_N_lines(n):
     for record in n_records:
@@ -232,5 +240,5 @@ for n_records in book.iterate_N_lines(n):
 
 # Видалення запису Jane
 book.delete("Jane")
-
+# Збереження книги у файл
 book.write_book_to_file("my_addressbook.bin")
